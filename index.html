@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>打飞机</title>
+		<style type="text/css">
+			.container{
+				position: relative;
+				margin: 0;
+				/*padding: 0;*/
+				width: 500px;
+				height: 660px;
+				background: url(image/background.png) repeat-y;
+				animation:background-move 10s  linear infinite;
+				overflow: hidden;
+			}
+			
+			@-webkit-keyframes background-move{
+				from{background-position: 0 0;}
+				to{background-position: 0 852px;}
+			}
+			
+			.plane{
+				position: absolute;
+				left: 0;
+				top: 0;
+				border: 0px solid #f0f;
+			}
+			.hero{
+				width: 100px;
+				height: 122px;
+			}
+			.enemy1{
+				width: 51px;
+				height: 39px;
+			}
+			.bullet{
+				width: 9px;
+				height: 21px;
+			}
+			#start{
+				margin: -webkit-calc(50%)
+			}
+			h1, p{
+				display: inline;
+			}
+		</style>
+		<script type="text/javascript" src="js/helper.js"></script>
+		<script type="text/javascript" src="js/sprite.js"></script>
+	</head>
+	<body>
+		<h1>我喜欢打飞机      </h1><p id="user_name">用户名：</p><p>      积分：</p><p id="point"></p>
+		<div class="container">
+			<input type="image" src="image/game_resume_pressed.png" id="start" />
+		</div>
+		<audio src="sound/game_music.wav" id="game_music" loop="loop">
+			当前浏览器不支持audio
+		</audio>
+		<script type="text/javascript">
+
+			container = document.querySelector(".container")
+			start_btn = document.querySelector("#start")
+			game_music = document.querySelector("#game_music")
+			myplane = null
+			enemy1_array = []
+			enemy1_count = 8
+			enemy2_array = []
+			enemy2_count = 4
+			enemy3_array = []
+			enemy3_count = 2
+			bullet_array = []
+			bullet_array1 = []
+			bullet_array2 = []
+			play_point=0
+			
+			function init(){
+				myplane = new HeroPlane()
+				for (var i=0;i<enemy1_count;i++){
+					x = getRand(50, 500)
+					y = getRand(0, 100)-100
+					enemy1_array[i] = new Enemy1Plane(x,y)
+				}
+				for (var i=0;i<enemy2_count;i++){
+					x = getRand(50, 500)
+					y = getRand(0, 100)-100
+					enemy2_array[i] = new Enemy2Plane(x,y)
+				}
+				for (var i=0;i<enemy3_count;i++){
+					x = getRand(50, 500)
+					y = getRand(0, 100)-100
+					enemy3_array[i] = new Enemy3Plane(x,y)
+				}
+			}
+			
+			function run(){
+				if (myplane.dead){
+					myplane.remove()
+					// 飞机死一次扣500分
+					play_point-=500
+					point.innerHTML=play_point
+					myplane = new HeroPlane()
+				}
+
+				for (i=0;i<enemy1_count; i++){
+					if (enemy1_array[i].dead){
+						enemy1_array[i].remove()
+						play_point+=10
+						point.innerHTML=play_point
+						enemy1_array[i] = new Enemy1Plane(x,y)
+					}
+				}
+
+				for (i=0;i<enemy2_count; i++){
+					if (enemy2_array[i].dead){
+						enemy2_array[i].remove()
+						play_point+=20
+						point.innerHTML=play_point
+						enemy2_array[i] = new Enemy2Plane(x,y)
+					}
+				}
+
+				for (i=0;i<enemy3_count; i++){
+					if (enemy3_array[i].dead){
+						enemy3_array[i].remove()
+						play_point+=50
+						point.innerHTML=play_point
+						enemy3_array[i] = new Enemy3Plane(x,y)
+					}
+				}
+
+				for (i=0;i<bullet_array.length; i++){
+					if (bullet_array[i].dead){
+						bullet_array[i].remove()
+						bullet_array[i] = null
+						bullet_array.splice(i,1)
+					}
+				}
+				
+				for (i=0;i<bullet_array1.length; i++){
+					if (bullet_array1[i].dead){
+						bullet_array1[i].remove()
+						bullet_array1[i] = null
+						bullet_array1.splice(i,1)
+					}
+				}
+				
+				for (i=0;i<bullet_array2.length; i++){
+					if (bullet_array2[i].dead){
+						bullet_array2[i].remove()
+						bullet_array2[i] = null
+						bullet_array2.splice(i,1)
+					}
+				}
+				
+				myplane.fly()
+				
+				enemy1_array.forEach(function(obj){
+					obj.fly()
+					if (obj.dead){
+						obj.remove()
+					}
+					if (isConflict(obj, myplane)){
+						obj.life -= 1
+						myplane.life -= 1
+					}
+				})
+
+				enemy2_array.forEach(function(obj){
+					obj.fly()
+					if (obj.dead){
+						obj.remove()
+					}
+					if (isConflict(obj, myplane)){
+						obj.life -= 1
+						myplane.life -= 1
+					}
+				})
+				
+				enemy3_array.forEach(function(obj){
+					obj.fly()
+					if (obj.dead){
+						obj.remove()
+					}
+					if (isConflict(obj, myplane)){
+						obj.life -= 1
+						myplane.life -= 1
+					}
+				})
+				
+				bullet_array.forEach(function(bullet, index, bullet_array){
+					bullet.fly()
+					enemy1_array.forEach(function(enemy){
+						if (isConflict(bullet, enemy)){
+							bullet.life -= 1
+							enemy.life -= 1
+						}
+					})
+					enemy2_array.forEach(function(enemy){
+						if (isConflict(bullet, enemy)){
+							bullet.life -= 1
+							enemy.life -= 1
+						}
+					})
+					enemy3_array.forEach(function(enemy){
+						if (isConflict(bullet, enemy)){
+							bullet.life -= 1
+							enemy.life -= 1
+						}
+					})
+				})
+				
+				bullet_array1.forEach(function(bullet1, index, bullet_array1){
+					bullet1.fly()
+					enemy1_array.forEach(function(enemy){
+						if (isConflict(bullet1, enemy)){
+							bullet1.life -= 1
+							enemy.life -= 1
+						}
+					})
+					enemy2_array.forEach(function(enemy){
+						if (isConflict(bullet1, enemy)){
+							bullet1.life -= 1
+							enemy.life -= 1
+						}
+					})
+					enemy3_array.forEach(function(enemy){
+						if (isConflict(bullet1, enemy)){
+							bullet1.life -= 1
+							enemy.life -= 1
+						}
+					})
+				})
+				
+				bullet_array2.forEach(function(bullet2, index, bullet_array2){
+					bullet2.fly()
+					enemy1_array.forEach(function(enemy){
+						if (isConflict(bullet2, enemy)){
+							bullet2.life -= 1
+							enemy.life -= 1
+						}
+					})
+					enemy2_array.forEach(function(enemy){
+						if (isConflict(bullet2, enemy)){
+							bullet2.life -= 1
+							enemy.life -= 1
+						}
+					})
+					enemy3_array.forEach(function(enemy){
+						if (isConflict(bullet2, enemy)){
+							bullet2.life -= 1
+							enemy.life -= 1
+						}
+					})
+				})
+				setTimeout(run,30)
+			}
+			
+			function shot(){
+				bullet = new Bullet(myplane.div.offsetLeft+myplane.div.offsetWidth/2,
+									myplane.div.offsetTop
+									)
+				if (bullet_array.length<=10){
+					bullet_array.push(bullet)
+				}
+			}
+			
+			function shot1(){
+				bullet1 = new Bullet1(myplane.div.offsetLeft+myplane.div.offsetWidth/2,
+									myplane.div.offsetTop
+									)
+				if (bullet_array1.length<=10){
+					bullet_array1.push(bullet1)
+				}
+			}
+			function shot2(){
+				bullet2 = new Bullet2(myplane.div.offsetLeft+myplane.div.offsetWidth/2,
+									myplane.div.offsetTop
+									)
+				if (bullet_array2.length<=10){
+					bullet_array2.push(bullet2)
+				}
+			}
+			
+
+			function play(){
+				init()
+				run()
+			}
+			
+
+			window.onload=function(){
+				document.onkeydown = function(event){
+					if (event.key in {ArrowLeft:1,ArrowRight:1,ArrowUp:1,ArrowDown:1}){
+						myplane.key=event.key
+					}
+					if (event.key == " "){
+						shot()
+						shot1()
+						shot2()
+					}
+				}
+				document.onkeyup=function(event){
+					  if (event.key in {ArrowLeft:1,ArrowRight:1,ArrowUp:1,ArrowDown:1}){
+							myplane.key=""
+					  }
+					}
+									
+				start_btn.onclick = function(){
+					this.style.display = "none"
+					game_music.play()
+					play()
+					// 用户名功能
+					your_name=prompt("请输入你在游戏里的名字：","玩家")
+					userName=document.querySelector("#user_name")
+					userName.append(your_name)
+					point=document.querySelector("#point")
+					point.innerHTML=play_point
+				}
+			}
+		</script>
+	</body>
+</html>
